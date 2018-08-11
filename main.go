@@ -19,6 +19,14 @@ const (
 	base64Alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 )
 
+var (
+	ErrInvalidHexLen  = errors.New("fromHexString: invalid input length")
+	ErrInvalidHexChar = errors.New("fromHexString: invalid input char")
+	ErrInvalidB64Len  = errors.New("fromBase64String: invalid input length")
+	ErrInvalidB64Char = errors.New("fromBase64String: invalid input char")
+	ErrDiffInputLen   = errors.New("different length of args")
+)
+
 func absFloat32(x float32) float32 {
 	if x < 0 {
 		return -x
@@ -52,7 +60,7 @@ func byteFromBase64(x byte) byte {
 func fromHexString(s hex) ([]byte, error) {
 	length := len(s)
 	if length%2 != 0 {
-		return nil, errors.New("fromHexString: invalid input length")
+		return nil, ErrInvalidHexLen
 	}
 	n := length / 2
 	bytes := make([]byte, n)
@@ -60,7 +68,7 @@ func fromHexString(s hex) ([]byte, error) {
 		a := byteFromHex(s[2*i])
 		b := byteFromHex(s[2*i+1])
 		if a > 15 || b > 15 {
-			return nil, errors.New("fromHexString: invalid input char")
+			return nil, ErrInvalidHexChar
 		}
 		bytes[i] = (a << 4) | b
 	}
@@ -71,7 +79,7 @@ func fromBase64String(s base64) ([]byte, error) {
 	// TODO Support unpadded input and check that padding only occurs at the end.
 	length := len(s)
 	if length%4 != 0 {
-		return nil, errors.New("fromBase64String: invalid input length")
+		return nil, ErrInvalidB64Len
 	}
 	padding := 0
 	switch {
@@ -89,7 +97,7 @@ func fromBase64String(s base64) ([]byte, error) {
 		c := byteFromBase64(s[4*i+2])
 		d := byteFromBase64(s[4*i+3])
 		if a > 63 || b > 63 || c > 63 || d > 63 {
-			return nil, errors.New("fromBase64String: invalid input char")
+			return nil, ErrInvalidB64Char
 		}
 		packed := (int32(a) << 18) | (int32(b) << 12) | (int32(c) << 6) | int32(d)
 		bytes[3*i] = byte(packed >> 16)
@@ -154,7 +162,7 @@ func toBase64String(bytes []byte) base64 {
 func xor(x, y []byte) ([]byte, error) {
 	length := len(x)
 	if length != len(y) {
-		return nil, errors.New("xor: byte arrays have different length")
+		return nil, ErrDiffInputLen
 	}
 	buf := make([]byte, length)
 	for i := 0; i < length; i++ {
@@ -164,10 +172,13 @@ func xor(x, y []byte) ([]byte, error) {
 }
 
 func xorHex(x, y hex) (hex, error) {
-	b1, err1 := fromHexString(x)
-	b2, err2 := fromHexString(y)
-	if err1 != nil || err2 != nil {
-		return "", errors.New("xorHex: invalid input")
+	b1, err := fromHexString(x)
+	if err != nil {
+		return "", err
+	}
+	b2, err := fromHexString(y)
+	if err != nil {
+		return "", err
 	}
 	xored, err := xor(b1, b2)
 	if err != nil {

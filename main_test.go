@@ -3,13 +3,10 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"errors"
 	"io/ioutil"
 	"os"
 	"testing"
 )
-
-var TodoErr error = errors.New("TODO") // TODO: match expected error
 
 func base64FromHex(x hex) (base64, error) {
 	bytes, err := fromHexString(x)
@@ -35,7 +32,8 @@ func TestBase64FromHex(t *testing.T) {
 	}{
 		{"4d616e", "TWFu", nil},
 		{"49276d", "SSdt", nil},
-		{"11xcv6", "", TodoErr},
+		{"11xcv6", "", ErrInvalidHexChar},
+		{"11c", "", ErrInvalidHexLen},
 		{"10", "EA==", nil},
 		{"49276d20", "SSdtIA==", nil},
 		// Challenge 1.1
@@ -46,10 +44,10 @@ func TestBase64FromHex(t *testing.T) {
 	for _, test := range tests {
 		input, expected, experr := test.input, test.expected, test.experr
 		res, err := base64FromHex(input)
-		if experr != nil && err == nil {
-			t.Errorf("base64FromHex(%s) expected error %v, got %v\n", input, experr, err)
+		if experr != err {
+			t.Errorf("base64FromHex(%s) expected error '%v', got '%v'\n", input, experr, err)
 		} else if res != expected {
-			t.Errorf("base64FromHex(%s) expected %v, got %v\n", input, expected, res)
+			t.Errorf("base64FromHex(%s) expected '%v', got '%v'\n", input, expected, res)
 		}
 	}
 }
@@ -64,15 +62,16 @@ func TestHexFromBase64(t *testing.T) {
 		{"SSdt", "49276d", nil},
 		{"EA==", "10", nil},
 		{"SSdtIA==", "49276d20", nil},
-		{"TWF-", "", TodoErr},
+		{"TWF-", "", ErrInvalidB64Char},
+		{"TWF", "", ErrInvalidB64Len},
 	}
 	for _, test := range tests {
 		input, expected, experr := test.input, test.expected, test.experr
 		res, err := hexFromBase64(input)
-		if experr != nil && err == nil {
-			t.Errorf("hexFromBase64(%s) expected error %v, got %v\n", input, experr, err)
+		if experr != err {
+			t.Errorf("hexFromBase64(%s) expected error '%v', got '%v'\n", input, experr, err)
 		} else if res != expected {
-			t.Errorf("hexFromBase64(%s) expected %v, got %v\n", input, expected, res)
+			t.Errorf("hexFromBase64(%s) expected '%v', got '%v'\n", input, expected, res)
 		}
 	}
 }
@@ -85,12 +84,14 @@ func TestXorHex(t *testing.T) {
 	}{
 		// Uneven input 1
 		{"1c0111001f010100061a024b53535009181c",
-			"686974207468652062756c6c27732065796", "", TodoErr},
+			"686974207468652062756c6c27732065796", "", ErrInvalidHexLen},
 		// Uneven input 2
 		{"1c0111001f010100061a024b53535009181",
-			"686974207468652062756c6c277320657965", "", TodoErr},
+			"686974207468652062756c6c277320657965", "", ErrInvalidHexLen},
 		// Illegal input
-		{"1345", "what", "", TodoErr},
+		{"1345", "what", "", ErrInvalidHexChar},
+		// Different input length
+		{"1c01", "686974", "", ErrDiffInputLen},
 		// Challenge 1.2
 		{"1c0111001f010100061a024b53535009181c",
 			"686974207468652062756c6c277320657965",
@@ -99,10 +100,10 @@ func TestXorHex(t *testing.T) {
 	for _, test := range tests {
 		x1, x2, expected, experr := test.x1, test.x2, test.expected, test.experr
 		res, err := xorHex(x1, x2)
-		if experr != nil && err == nil {
-			t.Errorf("xorHex(%s, %s) expected error %v, got %v\n", x1, x2, experr, err)
+		if experr != err {
+			t.Errorf("xorHex(%s, %s) expected error '%v', got '%v'\n", x1, x2, experr, err)
 		} else if res != expected {
-			t.Errorf("xorHex(%s, %s) expected %v, got %v\n", x1, x2, expected, res)
+			t.Errorf("xorHex(%s, %s) expected '%v', got '%v'\n", x1, x2, expected, res)
 		}
 	}
 }
