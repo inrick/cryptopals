@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"testing"
 )
@@ -22,6 +23,34 @@ func hexFromBase64(x base64) (hex, error) {
 		return "", err
 	}
 	return toHexString(bytes), nil
+}
+
+func TestHexAndB64Inverses(t *testing.T) {
+	for i := 0; i < 1000; i++ {
+		// Only test non-empty input
+		l := 1 + rand.Intn(1024)
+		bs := make([]byte, l)
+		for j := range bs {
+			bs[j] = byte(rand.Intn(256))
+		}
+		hex := toHexString(bs)
+		b64 := toBase64String(bs)
+
+		b1, err := fromHexString(hex)
+		if err != nil {
+			t.Errorf("Invalid hex: '%v'", hex)
+		}
+		b2, err := fromBase64String(b64)
+		if err != nil {
+			t.Errorf("Invalid b64: '%v'", b64)
+		}
+		if !bytes.Equal(b1, bs) {
+			t.Errorf("Invalid hex conversion: expected '%v', got '%v'", bs, b1)
+		}
+		if !bytes.Equal(b2, bs) {
+			t.Errorf("Invalid base64 conversion: expected '%v', got '%v'", bs, b2)
+		}
+	}
 }
 
 func TestBase64FromHex(t *testing.T) {
