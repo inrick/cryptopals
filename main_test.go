@@ -27,8 +27,7 @@ func hexFromBase64(x base64) (hex, error) {
 
 func TestHexAndB64Inverses(t *testing.T) {
 	for i := 0; i < 1000; i++ {
-		// Only test non-empty input
-		l := 1 + rand.Intn(1024)
+		l := rand.Intn(1024)
 		bs := make([]byte, l)
 		for j := range bs {
 			bs[j] = byte(rand.Intn(256))
@@ -59,6 +58,7 @@ func TestBase64FromHex(t *testing.T) {
 		want    base64
 		wanterr error
 	}{
+		{"", "", nil},
 		{"4d616e", "TWFu", nil},
 		{"49276d", "SSdt", nil},
 		{"11xcv6", "", ErrInvalidHexChar},
@@ -87,6 +87,7 @@ func TestHexFromBase64(t *testing.T) {
 		want    hex
 		wanterr error
 	}{
+		{"", "", nil},
 		{"TWFu", "4d616e", nil},
 		{"SSdt", "49276d", nil},
 		{"EA==", "10", nil},

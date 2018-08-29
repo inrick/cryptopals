@@ -83,6 +83,8 @@ func fromBase64String(s base64) ([]byte, error) {
 	}
 	padding := 0
 	switch {
+	case length < 4:
+		// do nothing
 	case s[length-2] == '=':
 		padding = 2
 	case s[length-1] == '=':
