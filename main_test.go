@@ -45,19 +45,19 @@ func TestHexAndB64Inverses(t *testing.T) {
 			t.Errorf("Invalid b64: '%v'", b64)
 		}
 		if !bytes.Equal(b1, bs) {
-			t.Errorf("Invalid hex conversion: expected '%v', got '%v'", bs, b1)
+			t.Errorf("Invalid hex conversion: want '%v', got '%v'", bs, b1)
 		}
 		if !bytes.Equal(b2, bs) {
-			t.Errorf("Invalid base64 conversion: expected '%v', got '%v'", bs, b2)
+			t.Errorf("Invalid base64 conversion: want '%v', got '%v'", bs, b2)
 		}
 	}
 }
 
 func TestBase64FromHex(t *testing.T) {
 	tests := []struct {
-		input    hex
-		expected base64
-		experr   error
+		input   hex
+		want    base64
+		wanterr error
 	}{
 		{"4d616e", "TWFu", nil},
 		{"49276d", "SSdt", nil},
@@ -71,21 +71,21 @@ func TestBase64FromHex(t *testing.T) {
 			nil},
 	}
 	for _, test := range tests {
-		input, expected, experr := test.input, test.expected, test.experr
-		res, err := base64FromHex(input)
-		if experr != err {
-			t.Errorf("base64FromHex(%s) expected error '%v', got '%v'\n", input, experr, err)
-		} else if res != expected {
-			t.Errorf("base64FromHex(%s) expected '%v', got '%v'\n", input, expected, res)
+		input, want, wanterr := test.input, test.want, test.wanterr
+		got, err := base64FromHex(input)
+		if wanterr != err {
+			t.Errorf("base64FromHex(%q) = '%v', want '%v'\n", input, err, wanterr)
+		} else if got != want {
+			t.Errorf("base64FromHex(%q) = '%v', want '%v'\n", input, got, want)
 		}
 	}
 }
 
 func TestHexFromBase64(t *testing.T) {
 	tests := []struct {
-		input    base64
-		expected hex
-		experr   error
+		input   base64
+		want    hex
+		wanterr error
 	}{
 		{"TWFu", "4d616e", nil},
 		{"SSdt", "49276d", nil},
@@ -95,21 +95,21 @@ func TestHexFromBase64(t *testing.T) {
 		{"TWF", "", ErrInvalidB64Len},
 	}
 	for _, test := range tests {
-		input, expected, experr := test.input, test.expected, test.experr
-		res, err := hexFromBase64(input)
-		if experr != err {
-			t.Errorf("hexFromBase64(%s) expected error '%v', got '%v'\n", input, experr, err)
-		} else if res != expected {
-			t.Errorf("hexFromBase64(%s) expected '%v', got '%v'\n", input, expected, res)
+		input, want, wanterr := test.input, test.want, test.wanterr
+		got, err := hexFromBase64(input)
+		if err != wanterr {
+			t.Errorf("hexFromBase64(%q) = '%v', want '%v'\n", input, err, wanterr)
+		} else if got != want {
+			t.Errorf("hexFromBase64(%q) = '%v', want '%v'\n", input, got, want)
 		}
 	}
 }
 
 func TestXorHex(t *testing.T) {
 	tests := []struct {
-		x1, x2   hex
-		expected hex
-		experr   error
+		x1, x2  hex
+		want    hex
+		wanterr error
 	}{
 		// Uneven input 1
 		{"1c0111001f010100061a024b53535009181c",
@@ -127,21 +127,21 @@ func TestXorHex(t *testing.T) {
 			"746865206b696420646f6e277420706c6179", nil},
 	}
 	for _, test := range tests {
-		x1, x2, expected, experr := test.x1, test.x2, test.expected, test.experr
-		res, err := xorHex(x1, x2)
-		if experr != err {
-			t.Errorf("xorHex(%s, %s) expected error '%v', got '%v'\n", x1, x2, experr, err)
-		} else if res != expected {
-			t.Errorf("xorHex(%s, %s) expected '%v', got '%v'\n", x1, x2, expected, res)
+		x1, x2, want, wanterr := test.x1, test.x2, test.want, test.wanterr
+		got, err := xorHex(x1, x2)
+		if err != wanterr {
+			t.Errorf("xorHex(%s, %s) = '%v', want '%v'\n", x1, x2, err, wanterr)
+		} else if got != want {
+			t.Errorf("xorHex(%s, %s) = '%v', want '%v'\n", x1, x2, got, want)
 		}
 	}
 }
 
 func TestChallenge1_3(t *testing.T) {
 	input := []hex{"1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"}
-	res, err := crackSingleCharXorHexs(input)
-	if err != nil || res != "Cooking MC's like a pound of bacon" {
-		t.Fail()
+	got, err := crackSingleCharXorHexs(input)
+	if err != nil || got != "Cooking MC's like a pound of bacon" {
+		t.Error()
 	}
 }
 
@@ -156,8 +156,8 @@ func TestChallenge1_4(t *testing.T) {
 	for scanner.Scan() {
 		hexs = append(hexs, hex(scanner.Text()))
 	}
-	res, err := crackSingleCharXorHexs(hexs)
-	if err != nil || res != "Now that the party is jumping\n" {
+	got, err := crackSingleCharXorHexs(hexs)
+	if err != nil || got != "Now that the party is jumping\n" {
 		t.Error("Challenge 1.4 failed")
 	}
 }
@@ -165,9 +165,9 @@ func TestChallenge1_4(t *testing.T) {
 func TestChallenge1_5(t *testing.T) {
 	key := []byte("ICE")
 	input := []byte("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal")
-	expected := hex("0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
-	res := toHexString(repeatingKeyXor(input, key))
-	if res != expected {
+	want := hex("0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
+	got := toHexString(repeatingKeyXor(input, key))
+	if got != want {
 		t.Error("Challenge 1.5 failed")
 	}
 }
@@ -177,14 +177,14 @@ func TestHammingDistance(t *testing.T) {
 	y := []byte("wokka wokka!!!")
 	dist, err := hammingDistance(x, y)
 	if err != nil || dist != 37 {
-		t.Fail()
+		t.Error()
 	}
 }
 
 func TestChallenge1_6(t *testing.T) {
 	input, err := readBase64File("data/6.txt")
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
 	keys := findRepeatingKeyXorCandidates(input)
 	results := make([][]byte, len(keys))
@@ -192,13 +192,13 @@ func TestChallenge1_6(t *testing.T) {
 		results[i] = repeatingKeyXor(input, key)
 	}
 	// Introspected data through debugger to find second entry
-	key, res := keys[2], results[2]
-	expkey := []byte("Terminator X: Bring the noise")
-	expected, err := ioutil.ReadFile("data/expected1_6.txt")
+	key, got := keys[2], results[2]
+	wantkey := []byte("Terminator X: Bring the noise")
+	want, err := ioutil.ReadFile("data/want1_6.txt")
 	if err != nil {
-		t.Fail()
+		t.Fatal(err)
 	}
-	if !bytes.Equal(res, expected) || !bytes.Equal(key, expkey) {
+	if !bytes.Equal(got, want) || !bytes.Equal(key, wantkey) {
 		t.Error("Challenge 1.6 failed")
 	}
 }
